@@ -1,0 +1,484 @@
+---
+title: "Predicting Churn in Telecom:An Analytical Perspective"
+subtitle: 'MATH 40024/50024: Computational Statistics'
+date: "October 19, 2023"
+output:
+  html_document:
+    df_print: paged
+fontfamily: mathpazo
+fontsize: 11pt
+header-includes: \linespread{1.05}
+urlcolor: blue
+---
+
+#### Introduction:
+
+In the ever_changing telecommunications industry,where consumer preferences evolve rapidly, identifying and mitigating customer attrition is a crucial pursuit for sustainable business success.The phenomenon known as customer churn, which occurs when subscribers stop using services, affects revenue streams and is an indication of both market competitiveness and customer satisfaction.This project embarks on a comprehensive analysis of Telco customer churning,seeking to identify the essential factors influencing consumer decisions in the field of telecommunications services.
+
+#### Telco Customer Churn Analysis: Research Questions
+
+In this project, I explore a series of research questions aimed at  uncovering insights into customer churn within the Telco telecommunications dataset. The analysis involves investigating various aspects. Where, each research question contribute to a deeper understanding of the factors influencing customer churn.
+
+#### Research Questions:-
+
+=>How do diverse combinations of demographic, service-related, and contractual variables interact to influence customer churn across various    scenarios, and and what detailed trends and correlations emerge from the complex interaction  of these factors?
+
+=>How do changes influence the predictive models for Telco customer churn, and what insights can be gained regarding the most influential variables and their interactions in predicting customer churn behavior?
+To what extent does the predictive performance of the  model, trained on Telco customer churn data, vary when assessing model performance on distinct training and testing subsets, and how does the stability of performance impact the reliability of model predictions across different data partitions?
+
+#### Identifying Telco Customer Churn: The Power of Data-Driven Computational Analysis
+
+In the telecommunications industry, comprehending customer churn is crucial for maintaining a resilient customer base.In order to address important inquiries regarding churning patterns inside the Telco customer dataset, a computational, data-driven methodology is essential.This research explores the significance of applying computational methods for discovering insights that are not only comprehensive but also actionable.
+The Telco customer churn dataset likely contains a large volume of data with numerous variables. Utilizing a computational approach enables the efficient processing and analysis of this extensive information,which might be challenging or impossible to handle manually.
+A strong foundation for making meaningful inferences is provided by statistical tests and modeling approaches, which are frequently implemented computationally.These techniques aid in determining the importance of relationships and making informed decisions based on evidence.
+As datasets grow in size, a computational approach remains flexible.In order to handle the growing volume and complexity of data and enable consistent application of analysis across huge datasets, this is essential.
+A statistically rigorous and interactive environment is provided by computational tools, especially R.By exploring and visualizing the data iteratively, analysts can make dynamic modifications to their analyses.
+
+#### Dataset Overview:-
+
+The Telco customer churn dataset offers a comprehensive overview of consumers within a telecommunications company,capturing numerous aspects of their interactions, services utilized, and the critical outcome of figuring out whether they have churned or not.Based on this dataset, which serves as the foundation for our analysis, allowing us to gain insights into customer behavior and factors influencing churn.
+
+#### Variables In the Dataset:-
+
+The dataset includes identifiers and descriptors that collectively contribute to a comprehensive understanding of customer behavior.
+
+CustomerID: A unique identifier assigned to each customer, facilitating individual tracking and analysis.
+
+Gender: Indicates the gender of the customer, providing a demographic dimension for segmentation and understanding customer preferences.
+
+SeniorCitizen: A binary variable specifying whether the customer is a senior citizen, which can influence service preferences and needs.
+
+Partner: Indicates whether the customer has a partner, which could be relevant in understanding household dynamics and subscription patterns.
+
+Dependents: A binary variable denoting whether the customer has dependents, offering insights into family-oriented service preferences.
+
+Tenure: Represents the duration for which a customer has been subscribed to the telecommunications services, a crucial metric for understanding customer loyalty.
+
+PhoneService: Indicates whether the customer has subscribed to phone services, a fundamental component of telecommunication offerings.
+
+MultipleLines: Describes whether the customer has multiple phone lines, providing insights into the level of service subscribed.
+
+InternetService: Specifies the type of internet service subscribed by the customer, such as DSL, fiber optic, or none.
+
+OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport: These variables represent different aspects of additional services like online security, backup, device protection, and technical support, which contribute to the overall service package.
+StreamingTV,StreamingMovies: Indicate whether the customer has opted for streaming TV and movies, reflecting preferences for entertainment services.
+
+Contract: Describes the type of contract the customer has, such as month-to-month, one year, or two years, providing insights into long-term commitment.
+
+PaperlessBilling: A binary variable indicating whether the customer has opted for paperless billing, reflecting preferences for digital transactions.
+
+PaymentMethod: Specifies the method of payment chosen by the customer, offering insights into payment preferences.
+
+MonthlyCharges: Represents the amount charged to the customer on a monthly basis.
+
+TotalCharges: Indicates the cumulative total charges incurred by the customer over their subscription period.
+
+Churn: The target variable indicating whether the customer has churned (yes or no), serving as a critical metric for understanding customer retention.
+
+#### Preparing Telco Customer Churn Data: Essential Data Wrangling Steps:-
+
+Data loading and inspection,Data cleaning,Feature Engineering
+
+#### Exploratory Data analysis:-
+
+Visualization Techniques,Correlation Analysis,chi-square test
+
+#### Modelling Techniques:-
+
+Logisitic Regression,Random Forest
+
+#### Resampling Techniques:-
+
+k-fold cross-validation,Boot strapping
+
+#### Evaluation Metrics for Data Analysis Quality:-
+
+Accuracy,Precision,Recall,F1-Score,ROC-AUC(Receiver Operating Characteristic-Area Under The Curve),Confusion Matrix
+
+## Exploratory Data Analysis 
+
+#### Libraries Used for the analysis:-
+
+library(tidyverse),library(readxl),library(gridExtra),library(corrplot),library(pROC),library(caret),library(rsample),
+
+library(ggplot2),library(boot),library(reshape2),library(randomForest)
+
+```{r echo=FALSE,message=FALSE,include=FALSE,warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(gridExtra)
+library(corrplot)
+library(pROC)
+library(caret)
+library(rsample)
+library(reshape2)
+library(ggplot2)
+library(boot)
+library(randomForest)
+##Data Wrangling
+telco_customer <- readxl::read_excel("C:\\Users\\likhi\\OneDrive\\Desktop\\Telco_Customer_Churn.xlsx")
+head(telco_customer)
+str(telco_customer)
+summary(telco_customer)
+dim(telco_customer)
+apply(telco_customer, 2, function(row) sum(is.na(row)))
+telco_customer<-na.omit(telco_customer)
+sum(is.na(telco_customer))
+telco_customer_churn <-telco_customer %>%mutate_if(is.character, factor)
+
+# Converting variables to factors
+telco_customer_churn$SeniorCitizen <- as.factor(telco_customer_churn$SeniorCitizen)
+telco_customer_churn <- telco_customer_churn %>% select(-customerID) %>% mutate_at(7, ~as.factor(case_when(. == "No phone service" ~ "No",
+. == "No" ~ "No", TRUE ~ "Yes"))) %>% mutate_at(8,~as.factor(case_when(. == "Fiber optic" ~ "FiberOptic",
+. == "DSL" ~ "DSL", TRUE ~ "No"))) %>% 
+# Convert columns 9 to 14 to factors
+mutate_at(c(9:14), ~as.factor(case_when(. == "No internet service" ~ "No",. == "No" ~ "No", TRUE ~ "Yes"))) %>%
+# Convert 'PaymentMethod' to a factor
+mutate_at(17, ~as.factor(case_when(. == "Bank transfer (automatic)" ~ "BankTransferAuto",. == "Credit card (automatic)" ~ "CreditCardAuto", 
+. == "Electronic check" ~ "ECheck", TRUE ~ "MailedCheck"))) %>%
+na.omit()
+str(telco_customer_churn)
+table(telco_customer_churn$Churn)
+```
+```{r}
+
+```
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+#Exploratory Data Analysis
+# Bar plot to check distribution of "Churn" variable - Target Variable
+count_churn = telco_customer_churn %>%
+  count(Churn) %>%
+  mutate(percent = prop.table(n) * 100)
+ggplot(count_churn, aes(x = factor(Churn), y = percent, fill = factor(Churn))) +
+  geom_bar(stat = "identity",colour="darkblue",size=1) +scale_fill_brewer(palette = "Paired")+
+  geom_text(aes(label = paste0(round(percent, 1), "%")), position = position_stack(vjust = 0.5)) +
+  labs(title = "Distribution of churn with Percentages", x = "Churned Customers", y = "Percentage") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+```
+
+"The visual representation of the data reveals that 26.6% of customers have churned, while the majority, accounting for 73.4%, have not churned."
+
+
+#### Numeric Variables and Churn Associations Analysis
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+# Select numeric variables only
+numeric_vars <- telco_customer_churn[sapply(telco_customer_churn, is.numeric)]
+
+# Combine 'Churn' with numeric variables
+numeric_churn_data <- cbind(Churn = telco_customer_churn$Churn, numeric_vars)
+
+# Melt the data for easier plotting
+melted_data <- melt(numeric_churn_data, id.vars = "Churn")
+
+# Define a color palette (you can replace these with your desired colors)
+my_palette <- c("No" = "skyblue", "Yes" = "darkblue")
+
+# Plot histograms
+ggplot(melted_data, aes(x = value, fill = Churn)) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 30,colour="darkblue",size=0.09) +
+  scale_fill_manual(values = my_palette) +  # Set the color palette
+  facet_wrap(~variable, scales = 'free') +
+  labs(title = "Histograms of Numeric Variables by Churn",
+       x = "Value", y = "Frequency") +
+  theme_minimal()
+```
+
+The histograms depicts the following:
+
+Less Tenure:The distribution of tenure for churned customers is concentrated towards lower values.
+
+Higher Monthly Charges:Churned customers show a trend towards higher values in the distribution of monthly charges.
+
+Less Total Charges:Churning customers may have lower total charges, indicating a potential pattern of early exits before accumulating higher total charges.
+
+These observations may indicate that customers with shorter tenure, higher monthly charges, and lower total charges are more likely to churn.
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+t2 <- telco_customer_churn %>% 
+  mutate(Churn2 = as.factor(ifelse(Churn == "Yes", "Former", "Current"))) 
+g1 <- ggplot(t2, aes(x = fct_rev(Churn2), y = tenure, fill = fct_rev(Churn2))) +
+  geom_bar(stat = "summary", fun = "mean", alpha = 0.6, color = "darkblue") +
+  stat_summary(aes(label = paste(round(..y.., 0), "months")), fun = mean, 
+               geom = "text", size = 3.5, vjust = -0.5) +
+  scale_fill_manual(values = c("Current" = "skyblue", "Former" = "darkblue")) +
+  labs(title = "Average Customer Tenure", x = "", y = "Customer Tenure") +
+  theme(plot.title = element_text(hjust = 0.5))
+g2 <- ggplot(t2, aes(x = Contract, y = MonthlyCharges, fill = fct_rev(Churn2))) +
+  geom_bar(stat = "summary", fun = "mean", alpha = 0.6, color = "darkblue", position = "dodge") +
+  stat_summary(aes(label = paste(round(..y.., 0), "$")), fun = mean, 
+               geom = "text", size = 3.5, vjust = -0.5, position = position_dodge(width = 0.9)) +
+  coord_cartesian(ylim = c(0, 95)) +
+  scale_fill_manual(values = c("Current" = "skyblue", "Former" = "darkblue")) +
+  labs(title = "Average Monthly Charges by Contract", x = "Contract Type", 
+       y = "Average Monthly Charges", fill = "") +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top", legend.justification = "left")
+grid.arrange(g1, g2, ncol = 2,nrow=1)
+```
+
+"The visualizations above depict the average tenure and monthly charges for both existing and former customers of Telco. Current customers, on average, have maintained their services for slightly over three years, while those who opted to leave had an average service duration of around 18 months.Furthermore, the data implies a trend where average monthly charges decrease for current customers across different contract durations, potentially indicating that recent customers, especially those on longer contracts, benefit from more favorable pricing."
+
+#### Interactions Between Numeric Predictor Variables
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+#Correlation Analysis for Numeric Variables
+numeric_variables <- telco_customer[, c('tenure', 'MonthlyCharges', 'TotalCharges')]
+correlation_matrix <- cor(numeric_variables)
+corrplot(correlation_matrix, method = "color",type="upper",t1.cex=0.9,addCoef.col = "black",number.cex = 0.7)
+
+```
+
+"The analysis reveals interesting connections between key variables in the telco customer churn dataset. Firstly, there is a weak positive correlation of about 0.25 between customer tenure and monthly charges, indicating a slight tendency for monthly charges to increase as the length of subscription (tenure) grows.Secondly, a strong positive correlation of approximately 0.83 exists between tenure and total charges. This implies that customers with longer subscriptions tend to accumulate higher total charges, which aligns with expectations.Lastly, there's a moderate positive correlation around 0.65 between monthly charges and total charges. This suggests that customers with higher monthly charges also tend to have higher total charges.In simple terms, the correlation matrix offers valuable insights into how numeric variables interact with each other in the dataset, providing a clearer understanding of their relationships."
+"Further analysis and modeling may be warranted to explore these relationships more deeply and understand the interplay between the categorical variables and customer churn."
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+#Interaction terms
+g1<-ggplot(telco_customer, aes(x = MonthlyCharges, y = TotalCharges)) +
+  geom_point(colour="darkblue") +labs(title = "Relation Between Monthly Charges and Total Charges", x = "Monthly Charges", y = "Total Charges")
+g2<-ggplot(telco_customer, aes(x = MonthlyCharges, y = TotalCharges, color = Churn)) +
+  geom_point() +scale_color_manual(values = c("No" = "skyblue", "Yes" = "darkblue"))+
+  labs(title = "Association of Monthly Charges and Total Charges with Customer Churn ", x = "Monthly Charges", y = "Total Charges")
+grid.arrange(g1, g2, ncol = 1,nrow=2)
+```
+
+"The observed trend indicates a positive correlation between monthly charges and total charges. As the monthly charges increase, there is a corresponding rise in total charges. This pattern is associated with a higher likelihood of customer churn. "
+
+#### Categorical Variables and Churn Associations Analysis
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+g1 <- ggplot(t2, aes(x = InternetService, group = fct_rev(Churn2))) + 
+  geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat = "count",
+           alpha = 0.6, colour="darkblue",size=1, show.legend = FALSE) +
+  geom_text(aes(label = paste(round(..prop.. * 100), "%"), y = ..prop..),size = 4, stat = "count", vjust = -0.5) +
+facet_grid(~fct_rev(Churn2)) +coord_cartesian(ylim = c(0, 0.9)) +  
+  scale_fill_brewer(palette = "Paired") +
+  labs(title = "1.Customer Churn by Internet Service", x = "Internet Service", y = "") +
+  theme(plot.title = element_text(hjust = 0.5))
+g2 <- ggplot(data = telco_customer_churn, aes(x = Churn,fill = PaymentMethod)) + geom_bar(stat = "count",position = position_dodge(),colour="darkblue",size=0.9) +scale_fill_brewer(palette = "Paired")+
+ggtitle("2.PaymentMethod") + theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
+grid.arrange(g1, g2, ncol = 2,nrow=1)
+
+```
+
+1."First illustration depicts that among customers who left the internet service, a significant majority, 69%, had opted for Fiber Optic. In contrast, 25% had chosen DSL, and a smaller proportion, 6%, had no Internet service.Among current customers, 38% use DSL, making it the most popular choice, followed by 35% with Fiber Optic. Interestingly, 27% of present customers do not have an Internet service subscription.The higher proportion of Fiber Optic among departing customers could indicate potential dissatisfaction or issues related to this specific service offering."
+
+2."From 2nd illustration the count of non-churning customers is relatively uniform across all four payment methods. In contrast, customers who have churned predominantly opted for the electronic check payment method."
+
+
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+g6 <- telco_customer_churn %>% 
+  ggplot(aes(x = ifelse(SeniorCitizen == 1, "Senior", "Not Senior"), fill = fct_rev(Churn))) +
+  geom_bar(alpha = 0.6, colour="darkblue",size=1) +
+  labs(title = "Customer Churn on Senior Citizens", y = "Count of Senior Citizen") +
+  scale_fill_manual(values = c("Yes" = "darkblue", "No" = "lightgreen")) + 
+  theme_minimal()
+g7 <- telco_customer_churn %>% ggplot(aes(x=gender, fill=fct_rev(Churn)))+  geom_bar(alpha=0.6, colour="darkblue",size=1) + labs(title="Customer Churn on Gender", y="Count of Gender")+
+  scale_fill_manual(values = c("Yes" = "darkblue", "No" = "lightgreen")) + 
+  theme_minimal()
+g8 <- telco_customer_churn %>% ggplot(aes(x=Partner, fill=fct_rev(Churn))) + geom_bar(alpha=0.6, colour="darkblue",size=1) + labs(title="Customer Churn on Partner", y="Count of Partner")+
+  scale_fill_manual(values = c("Yes" = "darkblue", "No" = "lightgreen")) + 
+  theme_minimal()
+g9 <- telco_customer_churn %>% ggplot(aes(x=Dependents, fill=fct_rev(Churn)))+  geom_bar(alpha=0.6,colour="darkblue",size=1) + labs(title="Customer Churn on Dependents", y="Count of Dependents")+
+  scale_fill_manual(values = c("Yes" = "darkblue", "No" = "lightgreen")) + 
+  theme_minimal() 
+grid.arrange(g6, g7, g8, g9)
+```
+
+"The demographic factors of Senior Citizen, Partner status, and Dependents status may play significant roles in influencing customer churn. However, gender alone does not appear to be a prominent factor affecting churn behavior based on the observed patterns in the provided bar plots."
+
+
+```{r echo=FALSE,warning = FALSE, message=FALSE}
+#Using the chisq.test() function to test correlation between Churn and each categorical variables(except CustomerID)
+# Subset the data for categorical variables
+x_categorical <- telco_customer[, c('gender', 'SeniorCitizen', 'Partner', 'Dependents',
+                                             'PhoneService', 'MultipleLines', 'InternetService',
+                                             'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
+                                             'TechSupport', 'StreamingTV', 'StreamingMovies',
+                                             'Contract', 'PaperlessBilling', 'PaymentMethod', 'Churn')]
+
+
+chisq_test <- lapply(x_categorical[, -length(x_categorical)], function(x) chisq.test(table(x, x_categorical$Churn))$p.value)
+
+df_chisq_test <- data.frame(Variable = names(chisq_test), P_value = unlist(chisq_test))
+
+library(ggplot2)
+ggplot(data = df_chisq_test, aes(y = Variable, x = P_value)) +
+  geom_bar(stat = "identity", fill = "darkblue",color="black",size=1.5) +
+  geom_vline(xintercept = 0.05, color = 'red') +
+  ggtitle("Association of Categorical Variables with target variable") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 1))
+
+```
+
+
+"The analysis of the telco customer churn dataset brings forth meaningful insights. Almost all variables, except 'Gender' and 'PhoneService,' show a strong statistical connection with customer churn, evidenced by p-values below the widely accepted threshold of 0.05. This indicates the potential significance of these variables in predicting churn behavior."
+
+"Further analysis and modeling may be warranted to explore these relationships more deeply and understand the interplay between the categorical variables and customer churn."
+
+## Predictive Modeling and Performance Assessment for Churn Prediction
+
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Split the data into training and testing sets
+trainIndex <- sample(1:nrow(telco_customer_churn), size = 0.8 * nrow(telco_customer_churn))
+train_data <- telco_customer_churn[trainIndex, ]
+test_data <- telco_customer_churn[-trainIndex, ]
+
+# Logistic regression model
+logit_model <- glm(Churn ~ ., data = train_data, family = "binomial")
+
+
+# Predictions on the test set
+predictions <- predict(logit_model, newdata = test_data, type = "response")
+
+# ROC curve
+roc_curve <- roc(test_data$Churn, predictions)
+auc_value <- auc(roc_curve)
+plot(roc_curve, main = "ROC Curve", col = "darkblue", lwd = 2)
+
+# K-fold cross-validation
+telco_split <- vfold_cv(train_data, v = 10, strata = "Churn")
+
+# Initialize empty lists to store confusion matrices and AUC values for each fold
+confusion_matrices <- list()
+auc_values <- numeric()
+precision_values <- numeric()
+recall_values <- numeric()
+f1_score_values <- numeric()
+accuracy_values <- numeric()
+
+# Perform k-fold cross-validation using a for loop
+for (i in seq_along(telco_split$splits)) {
+  fold <- telco_split$splits[[i]]
+  
+  # Train the model on each fold
+  model <- glm(Churn ~ ., data = analysis(fold), family = "binomial")
+  
+  # Make predictions on the assessment set (test set)
+  preds <- predict(model, newdata = assessment(fold), type = "response")
+  
+  # Convert probabilities to binary predictions based on a threshold (e.g., 0.5)
+  binary_preds <- ifelse(preds > 0.5, "Yes", "No")  # Adjust the levels accordingly
+  
+  # Create the confusion matrix for each fold
+  confusion_matrix <- table(assessment(fold)$Churn, binary_preds)
+  
+  # Store the confusion matrix in the list
+  confusion_matrices[[i]] <- confusion_matrix
+  
+  # Calculate AUC for each fold
+  roc_values <- roc(assessment(fold)$Churn, preds)
+  auc_fold <- auc(roc_values)
+  auc_values[i] <- auc_fold
+  precision_values[i] <- confusionMatrix(confusion_matrices[[i]])$byClass["Precision"]
+  recall_values[i] <- confusionMatrix(confusion_matrices[[i]])$byClass["Sensitivity"]
+  f1_score_values[i] <- confusionMatrix(confusion_matrices[[i]])$byClass["F1"]
+  accuracy_values[i] <- confusionMatrix(confusion_matrices[[i]])$overall["Accuracy"]
+}
+
+barplot(auc_values, names.arg = seq_along(auc_values), col = c("SteelBlue", "CadetBlue"),
+        main = "AUC Values for Each Fold in Cross-Validation",
+        xlab = "Fold", ylab = "AUC", ylim = c(0, 1), border = "darkblue", width = 0.6)
+
+# Add text labels inside each bar with the exact AUC values
+text(seq_along(auc_values), auc_values, labels = sprintf("%.3f", auc_values), pos = 3, col = "black", cex = 0.8)
+
+cat( "The average evaluation metrics across all 10 folds after performing k-fold cross-validation:", "\n")
+cat("Average Precision:", mean(precision_values, na.rm = TRUE), "\n")
+cat("Average Recall:", mean(recall_values, na.rm = TRUE), "\n")
+cat("Average F1-score:", mean(f1_score_values, na.rm = TRUE), "\n")
+cat("Average Accuracy:", mean(accuracy_values, na.rm = TRUE), "\n")
+cat("Average AUC:", mean(auc_values), "\n\n")
+
+# Function to calculate AUC for bootstrapping
+bootstrap_auc <- function(data, indices) {
+  sample_data <- data[indices, ]
+  model <- glm(Churn ~ ., data = sample_data, family = "binomial")
+  predictions <- predict(model, newdata = test_data, type = "response")
+  roc_curve <- roc(test_data$Churn, predictions)
+  return(auc(roc_curve))
+}
+
+# Perform bootstrapping for the entire model
+set.seed(123)
+bootstrap_results <- boot(data = train_data, statistic = bootstrap_auc, R = 1000)
+print(bootstrap_results)
+# Plot bootstrap distribution of AUC
+hist(bootstrap_results$t, col = "darkblue",border = "black",size=1, main = "Bootstrap Distribution of AUC(1000 re-sampling models)", xlab = "AUC")
+abline(v = auc_value, col = "red", lwd = 2)
+```
+
+The model exhibits consistent and robust predictive performance across all 10 folds in k-fold cross-validation. With an average precision of 0.8908, it excels in identifying positive cases, complemented by an average recall of 0.8426, indicating effective capture of actual positives. The balanced F1-score of 0.866 signifies a harmonious trade-off between precision and recall. The overall accuracy of 0.798 underscores the model's reliability in predicting both positive and negative cases, while the average AUC of 0.8414 confirms its discriminative ability. Additionally, bootstrapping validates the model's robustness, with the original AUC of approximately 0.86 falling within the confidence interval. This underscores the consistent and reliable predictive performance, emphasizing the significance of accounting for variability in customer behavior. The application of bootstrapping enhances model robustness, providing realistic confidence intervals and validating AUC stability. These combined findings underscore the model's effectiveness and practical utility in predicting customer churn for informed decision-making.
+
+
+#### Feature Importance Analysis in Churn Prediction Model
+
+
+
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+rf_model <- randomForest(as.factor(telco_customer_churn$Churn) ~ ., data = telco_customer_churn, ntree = 100)
+
+# Extract feature importance
+importance <- importance(rf_model)
+
+varImpPlot(rf_model, main = "Random Forest Feature Importance for Churn Prediction", col = "darkblue", pch = 19)
+```
+
+The above illustration provides valuable insights into the significance of various features in anticipating customer churn. Among the variables, 'MonthlyCharges' and 'TotalCharges' demonstrate the highest importance with values of 431.08 and 440.59, respectively, indicating that these financial factors significantly contribute to the model's ability to differentiate between churn and non-churn instances. 'Tenure' follows closely with a substantial importance of 403.58, emphasizing the significance of customer tenure in predicting churn. Other notable factors include 'Contract' (255.38), 'InternetService' (119.04), and 'PaperlessBilling' (60.70), suggesting that the type of contract, internet service, and billing method also play crucial roles. These findings highlight the key drivers influencing customer churn in the telecommunications dataset, providing valuable guidance for retention strategies and business decision-making.
+
+## Conclusion
+
+#### Analysis of Research Questions:-
+
+The analysis of the Telco customer churn dataset has provided valuable insights into the factors influencing customer attrition in the telecommunications industry. Through a comprehensive data analysis workflow, including data wrangling, exploratory data analysis, and predictive modeling, the study has illuminated key patterns and relationships within the dataset.
+
+The exploratory data analysis revealed several interesting observations:
+
+->A higher proportion of churned customers had shorter tenure, higher monthly charges, and lower total charges.
+
+->Internet service, contract type, and payment method were identified as significant factors associated with customer churn.
+
+->Demographic factors such as being a senior citizen, having a partner, and having dependents were explored, but their impact on churn seemed less pronounced.
+
+The predictive modeling, particularly using logistic regression and random forest, demonstrated strong performance in identifying customer churn. The k-fold cross-validation and bootstrapping approaches ensured robustness and reliability in evaluating the model's performance. The feature importance analysis highlighted the critical role of financial variables (MonthlyCharges, TotalCharges), tenure, and contract-related features in predicting churn.
+
+#### Scope and Generalizability of the Analysis:-
+
+#### Scope:
+
+The examination of Telco customer churn involves a thorough exploration of demographic factors, financial metrics, service-related variables, and contractual details. This holistic approach provides a comprehensive understanding of customer attrition in the telecommunications industry. The practical significance lies in identifying key patterns and relationships, offering actionable insights for strategic decision-making in the Telco sector. The analysis not only uncovers the complexities of customer churn but also presents a practical framework for tailored retention strategies. Methodological rigor, including k-fold cross-validation and bootstrapping, enhances the reliability and applicability of predictive models across diverse scenarios, ensuring the validity of the findings.
+
+#### Generalizability:
+
+The analysis's applicability reaches beyond the Telco customer churn dataset, offering insights transferable to the broader telecommunications sector. The methodologies used, from data wrangling to predictive modeling, are adaptable to similar contexts, allowing entities in comparable environments to optimize customer retention strategies. The findings, emphasizing financial variables, contract features, and service metrics, extend relevance to industries facing similar challenges. This versatility enables comparative studies and informs strategies across diverse sectors dealing with customer attrition dynamics.
+
+#### Potential limitations and possibilities for improvement:
+
+The analysis has limitations, relying on dataset representativeness and potential bias. Encoding strategies for categorical variables may impact model performance, and the absence of temporal information limits the ability to capture evolving trends. Additionally, logistic regression assumes linear relationships, potentially overlooking non-linear patterns. Improvements could involve addressing bias in encoding, incorporating temporal features, and exploring more complex models for more detailed relationships.
+To enhance model performance, explore feature engineering techniques, including creating new variables and incorporating time-related features. Experiment with ensemble methods like gradient boosting, optimize hyperparameters, and consider stacking models for improved predictions. Integrate external data sources for context, and implement continuous monitoring to adapt to evolving churn patterns. Additionally, employ validation metrics like area under the precision-recall curve for a thorough evaluation, especially in imbalanced datasets.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
